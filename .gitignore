@@ -1,0 +1,21 @@
+# 虚拟环境
+agent_env/
+venv/
+env/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.so
+
+# 本地配置
+.pytype/
+*.local
+
+# 编辑器
+.vscode/
+.idea/
+
+# 其他临时文件
+*.log
+*.tmp
