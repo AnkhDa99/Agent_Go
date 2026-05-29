@@ -1,6 +1,7 @@
 # ====================== 1. 导入所有依赖 ======================
 import re
 import os
+import inspect
 import requests
 from tavily import TavilyClient
 from openai import OpenAI
@@ -112,14 +113,14 @@ class OpenAICompatibleClient:
 
 # ====================== 7. 全局配置（重点！这里替换你的密钥和地址） ======================
 # ---------- 配置1：Tavily 搜索密钥（必配） ----------
-TAVILY_API_KEY = "你的Tavily密钥"
+TAVILY_API_KEY = "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"
 os.environ['TAVILY_API_KEY'] = TAVILY_API_KEY
 
 # ---------- 配置2：大模型 LLM 配置（二选一：本地Ollama / OpenAI官方） ----------
 # 方案A：使用【本地Ollama模型】（免费、无需翻墙，推荐新手）
 API_KEY = "ollama"  # Ollama固定填这个
 BASE_URL = "http://localhost:11434/v1"  # Ollama本地固定地址
-MODEL_ID = "qwen:7b"  # 你本地拉取的模型名，根据实际修改
+MODEL_ID = "deepseek-r1:7b"  # 你本地拉取的模型名，根据实际修改
 
 # 方案B：使用【OpenAI官方GPT】（需要密钥+外网，有条件再用）
 # API_KEY = "sk-xxxxxxxxxxxxxxxxxxxxxxxx"
@@ -187,7 +188,18 @@ if __name__ == "__main__":
         else:
             tool_name = tool_match.group(1)
             args_str = args_match.group(1)
-            kwargs = dict(re.findall(r'(\w+)="([^"]*)"', args_str))
+            # 先尝试命名参数 key="value" 格式
+            kwargs = dict(re.findall(r'(\w+)=["\']([^"\']*)["\']', args_str))
+            # 如果命名参数为空，尝试解析位置参数
+            if not kwargs:
+                pos_args = re.findall(r'["\']([^"\']*)["\']', args_str)
+                if tool_name in available_tools:
+                    import inspect
+                    sig = inspect.signature(available_tools[tool_name])
+                    param_names = list(sig.parameters.keys())
+                    for i, val in enumerate(pos_args):
+                        if i < len(param_names):
+                            kwargs[param_names[i]] = val
             # 执行工具
             if tool_name in available_tools:
                 observation = available_tools[tool_name](**kwargs)
